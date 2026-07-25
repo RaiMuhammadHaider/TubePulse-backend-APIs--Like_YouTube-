@@ -157,7 +157,97 @@ export const UserRefreshAccessToken = asyncHandler(
     }
 )
 
-export {userRegisterController , userLoginController , userLogedOut , userRegisterController }
+export const changeCurrentUserPassword = asyncHandler(
+    async(req , res) => {
+        const {oldPassword , newPassword } =  req.body
+        const user =  await user.findById(req.user?._id);
+ const isPasswordCurrect = await   isPasswordCorrect(oldPassword)
+        if (!isPasswordCurrect) {
+            throw new apiError(400 , "Invalid old password")
+        }
+        user.password = newPassword
+        await user.save({validateBeforeSave:false})
+return res.status(200).json(
+    new apiResponse(
+        200, [] , "Password change successfully"
+    )
+)
+    }
+)
+
+export const getCurrentUser = asyncHandler(
+    async(req , res) => {
+        return res.status(200).json(
+            new apiResponse(200 , req.user , "Current User fetch successfully ")
+        )
+    }
+)
+export const updateAccountDetail = asyncHandler(async(
+    req , res
+) => {
+    const {email , fullName } = req.body
+    if (!email || !fullName) {
+        throw new apiError(400 , "All faields are required")
+    }
+    user.findByIdAndUpdate(
+        req.user?._id, {
+            $set:{
+                fullName , email: email
+            }
+        }, {new : true}
+    ).select("-password")
+    return res.json(
+        new apiResponse(200 , user , "User update successfully ")
+    )
+}       )
+
+export const updateUserAvatar = asyncHandler(async(req , res)=> {
+    const avatarLocalPath = req.file?.path
+    if (!avatarLocalPath) {
+        throw new apiError(400 , "file is missing")
+    }
+    const avatar = await uploadOnCloudinary(avatarLocalPath)
+    if (!avatar?.url) {
+        throw new apiError(400 , "Error while uploading on avatar")
+    }
+    const user = await user.findByIdAndUpdate(req.user?._id
+        , {
+            $set : {
+                avatar: avatar.url
+            }
+        } , {new : true}
+    ).select("-password")
+    return res.status(200)
+    .json(
+        new apiResponse(200 , user , "Update user avatar successfully ")
+    )
+
+})
+export const updateUserCoverImage = asyncHandler(async(req , res)=> {
+    const coverImage = req.file?.path
+    if (!coverImage) {
+        throw new apiError(400 , "cover Image is required")
+    }
+    const cover = await uploadOnCloudinary(coverImage)
+      if (!cover?.url) {
+        throw new apiError(400 , "Error while uploading on cover")
+    }
+     const user = await user.findByIdAndUpdate(req.user?._id
+        , {
+            $set : {
+                avatar: cover.url
+            }
+        } , {new : true}
+    ).select("-password")
+    return res.status(200)
+    .json(
+        new apiResponse(200 , user , "Update user avatar successfully ")
+    )
+})
+
+//when you want to change the user like name email description images file make sure there should be a separate image or file change approch becasue if you change the whole user it will be heavy task on backend best pratice is make sure the separe endpoint of it 
+
+export {userRegisterController , userLoginController , userLogedOut , userRegisterController , updateUserAvatar , updateUserCoverImage , changeCurrentUserPassword , getCurrentUser , updateAccountDetail , changeCurrentUserPassword}
 
 
 
