@@ -1,4 +1,4 @@
-import { userRegisterController, userLoginController, userLogedOut } from "../controllers/user.controller.js";
+import { userRegisterController, userLoginController, userLogedOut , userRegisterController } from "../controllers/user.controller.js";
 import { Router } from "express";
 import {upload} from '../middlewares/multer.middleware.js'
 import { verifyJwt } from "../middlewares/auth.middleware.js";
@@ -18,4 +18,5 @@ router.route('/register').post(
     , userRegisterController) // router for user registration
   router.route("/login").post(  userLoginController)
     router.route("/logout").post( verifyJwt ,userLogedOut) // add secure route by implimenting the auth middleware 
+    router.route("/refreshToken").post()
 export default router

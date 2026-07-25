@@ -3,6 +3,9 @@ import { apiError } from "../utils/apiError.js";
 import {User} from '../models/user.model.js'
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import {apiResponse} from '../utils/apiResponse.js'
+import { JsonWebTokenError } from "jsonwebtoken";
+import { verifyJwt } from "../middlewares/auth.middleware.js";
+
 
 const generateAccessAndRefreshToken = async(userId)=> {
 try {
@@ -117,8 +120,44 @@ const userLogedOut = asyncHandler(async(req , res )=> {
     .clearCookie("refreshToken", options)
     .json(new apiResponse(200 , {}, "User Loged Out successfully"))
 })
+export const UserRefreshAccessToken = asyncHandler(
+    async(req , res ) => {
+       try {
+         const incomingRefreshToken = req.cookie.refreshToken || req.body.refreshToken
+         if (!incomingRefreshToken) {
+             throw new apiError(401 , "Unauthorized request")
+         }
+         const decodedToken = verifyJwt.verifyJwt(
+             incomingRefreshToken,
+             process.env.REFRESH_TOKEN_SECRET
+ 
+         )
+         const user = await user.findById(decodedToken?._id)
+         if (!user) {
+             throw new apiError(401 , "Invalid refresh token")
+         }
+         if (incomingRefreshToken !== user?.refreshToken) {
+             throw new apiError(401 , "refresh token is expired or used")
+         }
+         const options = {
+             httpOnly: true,
+             secure : true
+         }
+ const {accessToken , NewRefreshToken}=generateAccessAndRefreshToken(user._id)
+         return res.status(200).cookie("accessToken", accessToken , options)
+         .cookie("refreshToken" , NewRefreshToken , options)
+         .json(
+             new apiResponse(200,{
+                 accessToken, refreshToken: NewRefreshToken
+             }, "access token refreshed")
+         )
+       } catch (error) {
+        throw new apiError(401 , error?.message || "Invalid refresh Token")
+       }
+    }
+)
 
-export {userRegisterController , userLoginController , userLogedOut}
+export {userRegisterController , userLoginController , userLogedOut , userRegisterController }
 
 
 
