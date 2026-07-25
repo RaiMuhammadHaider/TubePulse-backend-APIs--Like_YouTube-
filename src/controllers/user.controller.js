@@ -3,7 +3,6 @@ import { apiError } from "../utils/apiError.js";
 import {User} from '../models/user.model.js'
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import {apiResponse} from '../utils/apiResponse.js'
-import { JsonWebTokenError } from "jsonwebtoken";
 import { verifyJwt } from "../middlewares/auth.middleware.js";
 
 
@@ -247,7 +246,7 @@ export const updateUserCoverImage = asyncHandler(async(req , res)=> {
 
 //when you want to change the user like name email description images file make sure there should be a separate image or file change approch becasue if you change the whole user it will be heavy task on backend best pratice is make sure the separe endpoint of it 
 
-export {userRegisterController , userLoginController , userLogedOut , userRegisterController , updateUserAvatar , updateUserCoverImage , changeCurrentUserPassword , getCurrentUser , updateAccountDetail , changeCurrentUserPassword}
+export { userLoginController , userLogedOut , userRegisterController   }
 
 
 
