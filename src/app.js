@@ -26,9 +26,5 @@ app.use(cookieParser())
 
 // router
 import userRouter from './routes/user.route.js'
-<<<<<<< HEAD
-app.use('/api/v1/user' , userRouter) // standard pratic
-=======
 app.use('/api/v1/user' , userRouter) // standard practice
->>>>>>> hot-fixes
 export {app}

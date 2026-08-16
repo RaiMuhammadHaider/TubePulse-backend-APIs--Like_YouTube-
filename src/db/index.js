@@ -8,7 +8,6 @@ dns.setServers(["1.1.1.1", "8.8.8.8"])
 
 const connectDB = async () => {
     try {
-<<<<<<< HEAD
         let connectionUrl = process.env.MONGODB_URL;
         if (connectionUrl.includes('?')) {
             const parts = connectionUrl.split('?');
@@ -28,11 +27,9 @@ const connectDB = async () => {
     } catch (error) {
         console.log(`MongoDB Connection Error : ${error} `);
         console.log("haider error", process.env.MONGODB_URL)
-=======
         if (!process.env.MONGODB_URL) {
             throw new Error("MONGODB_URL is missing from the .env file")
         }
->>>>>>> hot-fixes
 
         // dbName works with both a base Atlas URI and a URI that already has a path.
         // It avoids creating an invalid double slash before the database name.
@@ -41,10 +38,7 @@ const connectDB = async () => {
         })
 
         console.log(`MongoDB connected: ${connection.connection.host}/${connection.connection.name}`)
-    } catch (error) {
-        console.error("MongoDB connection error:", error.message)
-        throw error
-    }
+    } 
 }
 
 export default connectDB
