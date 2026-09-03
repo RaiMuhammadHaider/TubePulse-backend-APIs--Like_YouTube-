@@ -244,6 +244,72 @@ export const updateUserCoverImage = asyncHandler(async(req , res)=> {
     )
 })
 
+export const getUserCannelProfile =   asyncHandler(
+    async( req , res )=>     {
+const {username} = req.params
+if (!username.trim()) {
+    throw new apiError(400 , "user not found ")
+}
+const channel = await  User.aggregate([
+    {
+        $match : {
+            username : username?.toLowerCase()
+        }
+    },
+    {
+        $lookup:{
+            from : "subscriptions",
+            localField : "_id",
+            foreignField: "channel",
+            as : "subscribers"
+        }
+    },
+      {
+        $lookup:{
+            from : "subscriptions",
+            localField : "_id",
+            foreignField: "subscriber",
+            as : "subscribedTo"
+        }
+    }, 
+    {
+        $addFields : {
+            subscriberCount : {
+                $size : "$subscribers"
+            },
+            channelSubscripbedToCount : {
+                $size : "$subscribedTo"
+            },
+            isSubscribed: {
+                $cond : {
+                    if : { $in : [req.user?._id, "$subscribers.subscriber"]  },
+                    then : true,
+                    else: false
+                }
+            }
+        }
+    }, {
+        $project: {
+            fullName:1,
+            username:1,
+            subscriberCount:1,
+            channelSubscripbedToCount: 1,
+            isSubscribed:1,
+            avatar:1,
+            coverImage:1,
+            email:1,
+        }
+    }
+])
+if (!channel?.length) {
+    throw new apiError(404 , "channel does not exist")
+}
+return res.status(200).json(
+    new apiResponse(200 , channel[0], "user fetch successfully ")
+)
+    }
+)
+
 //when you want to change the user like name email description images file make sure there should be a separate image or file change approch becasue if you change the whole user it will be heavy task on backend best pratice is make sure the separe endpoint of it 
 
 export { userLoginController , userLogedOut , userRegisterController   }
