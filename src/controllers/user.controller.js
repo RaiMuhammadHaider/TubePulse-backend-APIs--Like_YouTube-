@@ -4,6 +4,7 @@ import {User} from '../models/user.model.js'
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import {apiResponse} from '../utils/apiResponse.js'
 import { verifyJwt } from "../middlewares/auth.middleware.js";
+import mongoose, { mongo } from "mongoose";
 
 
 const generateAccessAndRefreshToken = async(userId)=> {
@@ -312,7 +313,57 @@ return res.status(200).json(
 
 //when you want to change the user like name email description images file make sure there should be a separate image or file change approch becasue if you change the whole user it will be heavy task on backend best pratice is make sure the separe endpoint of it 
 
-export { userLoginController , userLogedOut , userRegisterController   }
+export const getWatchHistory = asyncHandler(async (req , res )=>{
+    const user = await User.aggregate([
+        {
+            $match: {
+                _id : new mongoose.Types.ObjectId(req.user._id)
+            }
+        },
+        {
+            $lookup:{
+                from : "videos",
+                localField : "watchHistory",
+                foreignField: "_id",
+                as : "watchHistory",
+                pipeline: [ 
+                    {
+                    $lookup : {
+                        from : "users",
+                        localField: "owner",
+                        foreignField: "_id",
+                        as : "owner",
+                        pipeline : [
+                            {
+                                $project: {
+                                    fullName : 1,
+                                    username : 1,
+                                    avatar: 1
+                                }
+                            }
+                        ]
+                    }}
+                    , {
+                        $addFields : {
+                            owner : {
+                                $first : "$owner"
+                            }
+                        }
+                    }
+                ]
+            }
+        }
+    ])
+    return res.status(200)
+    .json(
+        new apiResponse(
+            200 , user[0].watchedHistory , "History fetched successfully"
+        )
+    )
+})
+
+
+export { userLoginController , userLogedOut , userRegisterController , getUserCannelProfile   }
 
 
 
