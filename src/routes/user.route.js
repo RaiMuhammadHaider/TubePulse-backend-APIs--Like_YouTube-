@@ -1,4 +1,4 @@
-import { userRegisterController, userLoginController, userLogedOut  } from "../controllers/user.controller.js";
+import { userLoginController ,getCurrentUser,changeCurrentUserPassword, userLogedOut , updateAccountDetail,updateUserAvatar,updateUserCoverImage, userRegisterController , getUserCannelProfile ,UserRefreshAccessToken, getWatchHistory  } from "../controllers/user.controller.js";
 import { Router } from "express";
 import {upload} from '../middlewares/multer.middleware.js'
 import { verifyJwt } from "../middlewares/auth.middleware.js";
@@ -19,4 +19,13 @@ router.route('/register').post(
   router.route("/login").post(  userLoginController)
     router.route("/logout").post( verifyJwt ,userLogedOut) // add secure route by implimenting the auth middleware 
     // router.route("/refreshToken").post()
+    router.route("/getCurrentUser").get(verifyJwt , getCurrentUser)
+    router.route("/changePassword").patch(verifyJwt , changeCurrentUserPassword)
+    router.route("/updateAccount").patch(verifyJwt , updateAccountDetail)
+    router.route("/updateAvatar").patch(verifyJwt , updateUserAvatar)
+    router.route("/updateCoverImage").patch(verifyJwt , updateUserCoverImage)
+    router.route("/c/:getChannelProfile").get(verifyJwt , getUserCannelProfile)
+    router.route("/refreshTokens").post(verifyJwt , UserRefreshAccessToken)
+    router.route("/watchHistory").get(verifyJwt , getWatchHistory)
+
 export default router
