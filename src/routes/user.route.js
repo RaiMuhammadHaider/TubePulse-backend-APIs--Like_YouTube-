@@ -28,7 +28,7 @@ router.route('/register').post(
     // :getChannelProfile ko badal kar :username karein
 router.route("/c/:username").get(verifyJwt, getUserCannelProfile);
 
-    router.route("/refreshTokens").post(verifyJwt , UserRefreshAccessToken)
+router.route("/refresh-token").post(verifyJwt, UserRefreshAccessToken);
     router.route("/watchHistory").get(verifyJwt , getWatchHistory)
 
 export default router

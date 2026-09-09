@@ -5,6 +5,7 @@ import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import {apiResponse} from '../utils/apiResponse.js'
 import { verifyJwt } from "../middlewares/auth.middleware.js";
 import mongoose, { mongo } from "mongoose";
+import jwt from "jsonwebtoken"; // Standard JWT import check kar lein
 
 
 const generateAccessAndRefreshToken = async(userId)=> {
@@ -124,42 +125,64 @@ const userRegisterController = asyncHandler(async (req  , res ) => {
     .clearCookie("refreshToken", options)
     .json(new apiResponse(200 , {}, "User Loged Out successfully"))
 })
-const UserRefreshAccessToken = asyncHandler(
-    async(req , res ) => {
-       try {
-         const incomingRefreshToken = req.cookie.refreshToken || req.body.refreshToken
-         if (!incomingRefreshToken) {
-             throw new apiError(401 , "Unauthorized request")
-         }
-         const decodedToken = verifyJwt.verifyJwt(
-             incomingRefreshToken,
-             process.env.REFRESH_TOKEN_SECRET
- 
-         )
-         const user = await user.findById(decodedToken?._id)
-         if (!user) {
-             throw new apiError(401 , "Invalid refresh token")
-         }
-         if (incomingRefreshToken !== user?.refreshToken) {
-             throw new apiError(401 , "refresh token is expired or used")
-         }
-         const options = {
-             httpOnly: true,
-             secure : true
-         }
- const {accessToken , NewRefreshToken}=generateAccessAndRefreshToken(user._id)
-         return res.status(200).cookie("accessToken", accessToken , options)
-         .cookie("refreshToken" , NewRefreshToken , options)
-         .json(
-             new apiResponse(200,{
-                 accessToken, refreshToken: NewRefreshToken
-             }, "access token refreshed")
-         )
-       } catch (error) {
-        throw new apiError(401 , error?.message || "Invalid refresh Token")
-       }
+// import jwt from "jsonwebtoken"; // Standard JWT import check kar lein
+// import { User } from "../models/user.model.js"; // Ensure model name is correct
+
+const UserRefreshAccessToken = asyncHandler(async (req, res) => {
+    try {
+        // 1. req.cookies use karein (not req.cookie)
+        const incomingRefreshToken = req.cookies?.refreshToken || req.body.refreshToken;
+
+        if (!incomingRefreshToken) {
+            throw new apiError(401, "Unauthorized request: Refresh token missing");
+        }
+
+        // 2. Token ko verify karein (Standard library format)
+        const decodedToken = jwt.verify(
+            incomingRefreshToken,
+            process.env.REFRESH_TOKEN_SECRET
+        );
+
+        // 3. Database se User find karein (Capital 'User')
+        const user = await User.findById(decodedToken?._id);
+        if (!user) {
+            throw new apiError(401, "Invalid refresh token: User not found");
+        }
+
+        // 4. Token validation check (Replay attack protection)
+        if (incomingRefreshToken !== user?.refreshToken) {
+            throw new apiError(401, "Refresh token is expired or already used");
+        }
+
+        const options = {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production" // Production mein true rakhein
+        };
+
+        // 5. Await lagayein kyunki tokens generate karne mein time lagta hai
+        // Check standard variable casing (newRefreshToken)
+        const { accessToken, newRefreshToken } = await generateAccessAndRefreshToken(user._id);
+
+        return res
+            .status(200)
+            .cookie("accessToken", accessToken, options)
+            .cookie("refreshToken", newRefreshToken, options)
+            .json(
+                new apiResponse(
+                    200,
+                    { accessToken, refreshToken: newRefreshToken },
+                    "Access token refreshed successfully"
+                )
+            );
+
+    } catch (error) {
+        throw new apiError(401, error?.message || "Invalid refresh token");
     }
-)
+});
+
+// 6. Yahan se verifyJwt hata dein, refresh token route open hona chahiye
+
+
 
 const changeCurrentUserPassword = asyncHandler(
     async(req , res) => {
