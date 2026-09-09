@@ -224,28 +224,30 @@ const updateAccountDetail = asyncHandler(async (req, res) => {
 });
 
 
- const updateUserAvatar = asyncHandler(async(req , res)=> {
-    const avatarLocalPath = req.file?.path
+const updateUserAvatar = asyncHandler(async (req, res) => {
+    const avatarLocalPath = req.file?.path;
     if (!avatarLocalPath) {
-        throw new apiError(400 , "file is missing")
+        throw new apiError(400, "Avatar file is missing");
     }
-    const avatar = await uploadOnCloudinary(avatarLocalPath)
-    if (!avatar?.url) {
-        throw new apiError(400 , "Error while uploading on avatar")
-    }
-    const user = await user.findByIdAndUpdate(req.user?._id
-        , {
-            $set : {
-                avatar: avatar.url
-            }
-        } , {new : true}
-    ).select("-password")
-    return res.status(200)
-    .json(
-        new apiResponse(200 , user , "Update user avatar successfully ")
-    )
 
-})
+    // Is ek line se upload bhi hoga aur local file delete bhi ho jayegi
+    const avatar = await uploadOnCloudinary(avatarLocalPath);
+    
+    if (!avatar?.secure_url) { // secure_url use karein (https)
+        throw new apiError(400, "Error while uploading avatar on Cloudinary");
+    }
+
+    const user = await User.findByIdAndUpdate(
+        req.user?._id,
+        { $set: { avatar: avatar.secure_url } },
+        { new: true }
+    ).select("-password -refreshToken");
+
+    return res.status(200).json(
+        new apiResponse(200, user, "User avatar updated successfully")
+    );
+});
+
 const updateUserCoverImage = asyncHandler(async(req , res)=> {
     const coverImage = req.file?.path
     if (!coverImage) {
