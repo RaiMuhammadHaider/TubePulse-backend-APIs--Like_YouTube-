@@ -37,6 +37,7 @@ const userRegisterController = asyncHandler(async (req  , res ) => {
    let coverImageLocalPath
     if (req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length > 0) { // check if coverImage is provided if not then it will be undefined
         coverImageLocalPath = req.files.coverImage[0].path
+        
     }
     if (!avatarLocalPath) {
         throw new apiError(400 , "avatar is required" )
@@ -55,9 +56,12 @@ const userRegisterController = asyncHandler(async (req  , res ) => {
             avatar : avatar.url,
             coverImage : coverImage?.url || "",
         })
+        console.log(user);
         const createUser =  await  User.findById(user._id).select( // remove password and refreshToken from response
             "-password -refreshToken" // by default tu sary selected hoty hn lakin - sign ka matlb hota ha kiya kiya nahi chahiya
         )
+
+        console.log(createUser);
         if (!createUser) {
             throw new apiError(500 , "Something went wrong while register the user Internal Server " )
            
@@ -69,7 +73,7 @@ const userRegisterController = asyncHandler(async (req  , res ) => {
 
  
 })
-const userLoginController = asyncHandler( async (req, res)=> {
+ const userLoginController = asyncHandler( async (req, res)=> {
     const  {username , email , password} = req.body
     if (!email && !username) {
          throw new apiError(400 , "Email or username is required ")
@@ -100,7 +104,7 @@ const userLoginController = asyncHandler( async (req, res)=> {
     )
 } )
 
-const userLogedOut = asyncHandler(async(req , res )=> {
+ const userLogedOut = asyncHandler(async(req , res )=> {
     await User.findByIdAndUpdate(
         req.user._id, {
             $set:{
@@ -120,7 +124,7 @@ const userLogedOut = asyncHandler(async(req , res )=> {
     .clearCookie("refreshToken", options)
     .json(new apiResponse(200 , {}, "User Loged Out successfully"))
 })
-export const UserRefreshAccessToken = asyncHandler(
+const UserRefreshAccessToken = asyncHandler(
     async(req , res ) => {
        try {
          const incomingRefreshToken = req.cookie.refreshToken || req.body.refreshToken
@@ -157,12 +161,13 @@ export const UserRefreshAccessToken = asyncHandler(
     }
 )
 
-export const changeCurrentUserPassword = asyncHandler(
+const changeCurrentUserPassword = asyncHandler(
     async(req , res) => {
         const {oldPassword , newPassword } =  req.body
-        const user =  await user.findById(req.user?._id);
- const isPasswordCurrect = await   isPasswordCorrect(oldPassword)
-        if (!isPasswordCurrect) {
+        const user =  await User.findById(req.user?._id);
+//  const isPasswordCurrect = await   isPasswordCurrect(oldPassword)
+const isPasswordCorrect = await user.isPasswordCorrect(oldPassword);
+        if (!isPasswordCorrect) {
             throw new apiError(400 , "Invalid old password")
         }
         user.password = newPassword
@@ -175,14 +180,14 @@ return res.status(200).json(
     }
 )
 
-export const getCurrentUser = asyncHandler(
+const getCurrentUser = asyncHandler(
     async(req , res) => {
         return res.status(200).json(
             new apiResponse(200 , req.user , "Current User fetch successfully ")
         )
     }
 )
-export const updateAccountDetail = asyncHandler(async(
+ const updateAccountDetail = asyncHandler(async(
     req , res
 ) => {
     const {email , fullName } = req.body
@@ -201,7 +206,7 @@ export const updateAccountDetail = asyncHandler(async(
     )
 }       )
 
-export const updateUserAvatar = asyncHandler(async(req , res)=> {
+ const updateUserAvatar = asyncHandler(async(req , res)=> {
     const avatarLocalPath = req.file?.path
     if (!avatarLocalPath) {
         throw new apiError(400 , "file is missing")
@@ -223,7 +228,7 @@ export const updateUserAvatar = asyncHandler(async(req , res)=> {
     )
 
 })
-export const updateUserCoverImage = asyncHandler(async(req , res)=> {
+const updateUserCoverImage = asyncHandler(async(req , res)=> {
     const coverImage = req.file?.path
     if (!coverImage) {
         throw new apiError(400 , "cover Image is required")
@@ -245,7 +250,7 @@ export const updateUserCoverImage = asyncHandler(async(req , res)=> {
     )
 })
 
-export const getUserCannelProfile =   asyncHandler(
+const getUserCannelProfile =   asyncHandler(
     async( req , res )=>     {
 const {username} = req.params
 if (!username.trim()) {
@@ -313,7 +318,7 @@ return res.status(200).json(
 
 //when you want to change the user like name email description images file make sure there should be a separate image or file change approch becasue if you change the whole user it will be heavy task on backend best pratice is make sure the separe endpoint of it 
 
-export const getWatchHistory = asyncHandler(async (req , res )=>{
+const getWatchHistory = asyncHandler(async (req , res )=>{
     const user = await User.aggregate([
         {
             $match: {
@@ -363,7 +368,7 @@ export const getWatchHistory = asyncHandler(async (req , res )=>{
 })
 
 
-export { userLoginController ,getCurrentUser,changeCurrentUserPassword, userLogedOut , updateAccountDetail,updateUserAvatar,updateUserCoverImage, userRegisterController , getUserCannelProfile ,UserRefreshAccessToken, getWatchHistory  }
+export { userLoginController ,getCurrentUser,changeCurrentUserPassword, userLogedOut , updateAccountDetail,updateUserAvatar,updateUserCoverImage, userRegisterController , getUserCannelProfile ,UserRefreshAccessToken , getWatchHistory , generateAccessAndRefreshToken} 
 
 
 

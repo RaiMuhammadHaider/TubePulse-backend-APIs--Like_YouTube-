@@ -27,4 +27,18 @@ app.use(cookieParser())
 // router
 import userRouter from './routes/user.route.js'
 app.use('/api/v1/user' , userRouter) // standard practice
+
+// Keep errors JSON-serializable, including errors returned by third-party APIs.
+app.use((error, _req, res, _next) => {
+    const statusCode = error.statusCode || error.http_code || 500
+    const message = error.error?.message || error.message || "Internal Server Error"
+
+    console.error("Request failed:", { statusCode, message })
+    res.status(statusCode).json({
+        success: false,
+        message,
+        errors: error.errors || [],
+    })
+})
+
 export {app}
