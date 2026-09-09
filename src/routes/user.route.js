@@ -24,7 +24,10 @@ router.route('/register').post(
     router.route("/updateAccount").patch(verifyJwt , updateAccountDetail)
     router.route("/updateAvatar").patch(verifyJwt , upload.single("avatar") , updateUserAvatar)
     router.route("/updateCoverImage").patch(verifyJwt, upload.single("coverImage") , updateUserCoverImage)
-    router.route("/c/:getChannelProfile").get(verifyJwt , getUserCannelProfile)
+    // router.route("/c/:getChannelProfile").get(verifyJwt , getUserCannelProfile)
+    // :getChannelProfile ko badal kar :username karein
+router.route("/c/:username").get(verifyJwt, getUserCannelProfile);
+
     router.route("/refreshTokens").post(verifyJwt , UserRefreshAccessToken)
     router.route("/watchHistory").get(verifyJwt , getWatchHistory)
 
