@@ -187,24 +187,42 @@ const getCurrentUser = asyncHandler(
         )
     }
 )
- const updateAccountDetail = asyncHandler(async(
-    req , res
-) => {
-    const {email , fullName } = req.body
-    if (!email || !fullName) {
-        throw new apiError(400 , "All faields are required")
+const updateAccountDetail = asyncHandler(async (req, res) => {
+    const { email, fullName } = req.body;
+
+    // 1. Validation check karein (Ensure fields are not empty or just spaces)
+    if (!email?.trim() || !fullName?.trim()) {
+        throw new apiError(400, "All fields are required");
     }
-    user.findByIdAndUpdate(
-        req.user?._id, {
-            $set:{
-                fullName , email: email
+
+    // 2. Email uniqueness check karein (Agar email update ho raha hai)
+    const existingUser = await User.findOne({ email });
+    if (existingUser && existingUser._id.toString() !== req.user?._id.toString()) {
+        throw new apiError(409, "Email is already taken by another user");
+    }
+
+    // 3. User details ko update karein
+    const user = await User.findByIdAndUpdate(
+        req.user?._id,
+        {
+            $set: {
+                fullName: fullName.trim(),
+                email: email.trim()
             }
-        }, {new : true}
-    ).select("-password")
-    return res.json(
-        new apiResponse(200 , user , "User update successfully ")
-    )
-}       )
+        },
+        { new: true } // Updated document return karega
+    ).select("-password -refreshToken"); // Sensitive data remove karein
+
+    if (!user) {
+        throw new apiError(404, "User not found");
+    }
+
+    // 4. Response send karein
+    return res
+        .status(200)
+        .json(new apiResponse(200, user, "Account details updated successfully"));
+});
+
 
  const updateUserAvatar = asyncHandler(async(req , res)=> {
     const avatarLocalPath = req.file?.path
