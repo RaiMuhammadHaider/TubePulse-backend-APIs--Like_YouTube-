@@ -338,54 +338,68 @@ return res.status(200).json(
 
 //when you want to change the user like name email description images file make sure there should be a separate image or file change approch becasue if you change the whole user it will be heavy task on backend best pratice is make sure the separe endpoint of it 
 
-const getWatchHistory = asyncHandler(async (req , res )=>{
+// import mongoose from "mongoose"; // Ensure this import is present
+
+const getWatchHistory = asyncHandler(async (req, res) => {
+    // 1. Pipeline execute karein
     const user = await User.aggregate([
         {
             $match: {
-                _id : new mongoose.Types.ObjectId(req.user._id)
+                // req.user._id ko safely ObjectId mein cast karein
+                _id: new mongoose.Types.ObjectId(req.user?._id)
             }
         },
         {
-            $lookup:{
-                from : "videos",
-                localField : "watchHistory",
+            $lookup: {
+                from: "videos",
+                localField: "watchHistory",
                 foreignField: "_id",
-                as : "watchHistory",
-                pipeline: [ 
+                as: "watchHistory", // Array ka naam 'watchHistory' hai
+                pipeline: [
                     {
-                    $lookup : {
-                        from : "users",
-                        localField: "owner",
-                        foreignField: "_id",
-                        as : "owner",
-                        pipeline : [
-                            {
-                                $project: {
-                                    fullName : 1,
-                                    username : 1,
-                                    avatar: 1
+                        $lookup: {
+                            from: "users",
+                            localField: "owner",
+                            foreignField: "_id",
+                            as: "owner",
+                            pipeline: [
+                                {
+                                    $project: {
+                                        fullName: 1,
+                                        username: 1,
+                                        avatar: 1
+                                    }
                                 }
-                            }
-                        ]
-                    }}
-                    , {
-                        $addFields : {
-                            owner : {
-                                $first : "$owner"
+                              ]
+                        }
+                    },
+                    {
+                        $addFields: {
+                            owner: {
+                                $first: "$owner" // Array se object mein convert karein
                             }
                         }
                     }
                 ]
             }
         }
-    ])
-    return res.status(200)
-    .json(
+    ]);
+
+    // 2. Check karein agar user nahi mila ya data missing hai
+    if (!user?.length) {
+        throw new apiError(404, "User not found");
+    }
+
+    // 3. Response send karein (user[0].watchHistory use karein, watchedHistory nahi)
+    return res.status(200).json(
         new apiResponse(
-            200 , user[0].watchedHistory , "History fetched successfully"
+            200,
+            user[0].watchHistory || [], // Agar history khali ho to empty array bhejien
+            "Watch history fetched successfully"
         )
-    )
-})
+    );
+});
+
 
 
 export { userLoginController ,getCurrentUser,changeCurrentUserPassword, userLogedOut , updateAccountDetail,updateUserAvatar,updateUserCoverImage, userRegisterController , getUserCannelProfile ,UserRefreshAccessToken , getWatchHistory , generateAccessAndRefreshToken} 
