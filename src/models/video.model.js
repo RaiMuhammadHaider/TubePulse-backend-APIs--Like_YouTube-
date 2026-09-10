@@ -8,19 +8,19 @@ const videoSchema = new Schema({
     },
     thumbnail : {
         type : String,
-        required : true
+        
     },
     title : {
         type : String,
-        required : true
+        
 
     },
     description : {
         type : String,
-        required : true
+        
     },duration : {
         type : Number,
-        required : true
+        
     },
     views : {
         type : Number,
@@ -28,7 +28,7 @@ const videoSchema = new Schema({
     },
     isPunlished : {
         type : Boolean,
-        require : true
+        default : true
     },
     owner : {
         type : mongoose.Schema.Types.ObjectId,
