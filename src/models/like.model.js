@@ -1,29 +1,29 @@
-import mongoose , {Schema} from "mongoose";
+import mongoose, { Schema } from "mongoose";
 import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2";
-import { Video } from "./video.model";
+
 const likeSchema = new Schema({
-    comments : {
-        type : mongoose.Schema.Types.ObjectId,
-        ref : "Comments",
-        required : true
+    // Removed required: true, changed to singular 'comment'
+    comment: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Comment" 
     },
-    Video : {
-        type : mongoose.Schema.Types.ObjectId,
-        ref : "Video",
-        required : true
+    // Changed 'Video' to lowercase 'video' for consistency
+    video: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Video"
     },
-    likeBy : {
-        type : mongoose.Schema.Types.ObjectId,
-        ref : "User",
-        required : true
+    tweet: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Tweet"
     },
-    tweet : {
-        type : mongoose.Schema.Types.ObjectId,
-        ref : "Tweet",
-        required : true
-    },
+    likedBy: { // Changed 'likeBy' to 'likedBy' (standard naming)
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        required: true
+    }
+}, { timestamps: true });
 
-} , {timestamps : true} )
+// Correct way to inject the plugin
+likeSchema.plugin(mongooseAggregatePaginate);
 
-mongooseAggregatePaginate(likeSchema);
-export const Like = mongoose.model("Like",likeSchema);
+export const Like = mongoose.model("Like", likeSchema);
