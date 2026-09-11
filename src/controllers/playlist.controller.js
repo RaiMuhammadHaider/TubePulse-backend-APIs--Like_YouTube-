@@ -234,43 +234,6 @@ const addVideoToPlayList = asyncHandler(async (req, res) => {
         .json(new apiResponse(200, playlist, "Video added to playlist successfully"));
 });
 
-const removeVideoFromPlayList = asyncHandler(async (req, res) => {
-    const { playlistId, videoId } = req.params;
-
-    // 1. Validate both IDs
-    if (!isValidObjectId(playlistId) || !isValidObjectId(videoId)) {
-        return res.status(400).json(new apiError(400, "Invalid playlistId or videoId"));
-    }
-
-    // 2. Fetch the Playlist
-    const playlist = await Playlist.findById(playlistId);
-
-    if (!playlist) {
-        return res.status(404).json(new apiError(404, "Playlist not found"));
-    }
-
-    // 3. Security Check: Only the owner can remove videos
-    if (playlist.owner.toString() !== req.user._id.toString()) {
-        return res.status(403).json(new apiError(403, "You do not have permission to remove videos from this playlist"));
-    }
-
-    // 4. Check if the video is actually inside the playlist
-    const isVideoInPlaylist = playlist.videos.some(
-        (id) => id.toString() === videoId
-    );
-
-    if (!isVideoInPlaylist) {
-        return res.status(404).json(new apiError(404, "Video is not in this playlist"));
-    }
-
-    // 5. Remove the video using Mongoose's built-in array .pull() method
-    playlist.videos.pull(videoId);
-    await playlist.save();
-
-    return res
-        .status(200)
-        .json(new apiResponse(200, playlist, "Video removed from playlist successfully"));
-});
 
 const getUserPlayList = asyncHandler(async (req, res) => {
     const { userId } = req.params;
@@ -313,6 +276,44 @@ const getUserPlayList = asyncHandler(async (req, res) => {
         .status(200)
         .json(new apiResponse(200, playlists, "User playlists fetched successfully"));
 });
+const removeVideoFromPlayList = asyncHandler(async (req, res) => {
+    const { playlistId, videoId } = req.params;
+
+    // 1. Validate both IDs
+    if (!isValidObjectId(playlistId) || !isValidObjectId(videoId)) {
+        return res.status(400).json(new apiError(400, "Invalid playlistId or videoId"));
+    }
+
+    // 2. Fetch the Playlist
+    const playlist = await Playlist.findById(playlistId);
+
+    if (!playlist) {
+        return res.status(404).json(new apiError(404, "Playlist not found"));
+    }
+
+    // 3. Security Check: Only the owner can remove videos
+    if (playlist.owner.toString() !== req.user._id.toString()) {
+        return res.status(403).json(new apiError(403, "You do not have permission to remove videos from this playlist"));
+    }
+
+    // 4. Check if the video is actually inside the playlist
+    const isVideoInPlaylist = playlist.videos.some(
+        (id) => id.toString() === videoId
+    );
+
+    if (!isVideoInPlaylist) {
+        return res.status(404).json(new apiError(404, "Video is not in this playlist"));
+    }
+
+    // 5. Remove the video using Mongoose's built-in array .pull() method
+    playlist.videos.pull(videoId);
+    await playlist.save();
+
+    return res
+        .status(200)
+        .json(new apiResponse(200, playlist, "Video removed from playlist successfully"));
+});
+
 
 export {
     createPlayList,

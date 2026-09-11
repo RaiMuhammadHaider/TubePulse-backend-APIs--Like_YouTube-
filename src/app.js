@@ -26,7 +26,20 @@ app.use(cookieParser())
 
 // router
 import userRouter from './routes/user.route.js'
+import playListRouter from "./routes/playlist.route.js"
+import likeRoute from "./routes/like.route.js"
+import commentRoute from "./routes/comments.route.js"
+import videoRouter from './routes/video.route.js'
+import subscriptionRouter from './routes/subscription.route.js'
+import tweetRouter from './routes/tweel.route.js'
+
 app.use('/api/v1/user' , userRouter) // standard practice
+app.use("/api/v1/video" , videoRouter)
+app.use("/api/v1/playlist" , playListRouter)
+app.use("/api/v1/like" , likeRoute)
+app.use("/api/v1/comment" , commentRoute)
+app.use("/api/v1/subscription" , subscriptionRouter)
+app.use("/api/v1/tweet" , tweetRouter)
 
 // Keep errors JSON-serializable, including errors returned by third-party APIs.
 app.use((error, _req, res, _next) => {
